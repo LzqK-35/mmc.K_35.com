@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPS测试 - 点击速度挑战</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 自定义配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        dark: '#1F2937',
+                        light: '#F3F4F6'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .click-btn-shadow {
+                box-shadow: 0 0 20px rgba(79, 70, 229, 0.3);
+            }
+            .click-btn-active {
+                transform: scale(0.95);
+                box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
+            }
+            .animate-pulse-slow {
+                animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gradient-to-br from-dark to-gray-800 text-light min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <nav class="bg-dark/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-700">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fa fa-hand-pointer-o text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">CPS测试</h1>
+            </div>
+            <div class="flex gap-4">
+                <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-700 transition-colors">
+                    <i class="fa fa-moon-o text-lg"></i>
+                </button>
+                <button id="helpBtn" class="p-2 rounded-full hover:bg-gray-700 transition-colors">
+                    <i class="fa fa-question-circle text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-16">
+        <!-- 测试卡片 -->
+        <div class="max-w-3xl mx-auto bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700 overflow-hidden">
+            <!-- 测试头部 -->
+            <div class="p-6 md:p-8 border-b border-gray-700">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-bold mb-2">点击速度测试</h2>
+                        <p class="text-gray-400">测试你的点击速度（CPS），挑战极限！</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="time10" class="px-4 py-2 rounded-lg bg-primary/80 hover:bg-primary transition-colors active">10秒</button>
+                        <button id="time30" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">30秒</button>
+                        <button id="time60" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">60秒</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 测试区域 -->
+            <div class="p-6 md:p-8 flex flex-col items-center">
+                <!-- 状态信息 -->
+                <div class="w-full mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex gap-6">
+                        <div class="text-center">
+                            <p class="text-gray-400 text-sm mb-1">点击数</p>
+                            <p id="clickCount" class="text-2xl font-bold text-primary">0</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-gray-400 text-sm mb-1">CPS</p>
+                            <p id="cpsValue" class="text-2xl font-bold text-secondary">0.00</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-gray-400 text-sm mb-1">剩余时间</p>
+                            <p id="timerDisplay" class="text-2xl font-bold text-accent">10</p>
+                        </div>
+                    </div>
+                    <div id="statusText" class="text-lg font-medium text-gray-300">
+                        点击下方按钮开始测试
+                    </div>
+                </div>
+
+                <!-- 点击按钮 -->
+                <button id="clickButton" class="w-48 h-48 md:w-64 md:h-64 rounded-full bg-primary click-btn-shadow hover:bg-primary/90 active:click-btn-active transition-all flex items-center justify-center text-3xl font-bold mb-8 cursor-pointer">
+                    开始测试
+                </button>
+
+                <!-- 控制按钮 -->
+                <div class="flex gap-4">
+                    <button id="startBtn" class="px-6 py-3 rounded-lg bg-secondary hover:bg-secondary/90 transition-colors flex items-center gap-2">
+                        <i class="fa fa-play"></i>
+                        <span>开始</span>
+                    </button>
+                    <button id="resetBtn" class="px-6 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors flex items-center gap-2">
+                        <i class="fa fa-refresh"></i>
+                        <span>重置</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果和历史记录 -->
+        <div class="max-w-3xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 测试结果 -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700 p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa fa-trophy text-accent"></i>
+                    本次结果
+                </h3>
+                <div id="resultDisplay" class="text-center py-4">
+                    <p class="text-gray-400 mb-2">暂无测试结果</p>
+                    <div class="flex justify-center gap-6 mt-4">
+                        <div>
+                            <p class="text-sm text-gray-400">总点击</p>
+                            <p id="resultClicks" class="text-xl font-bold">0</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">CPS</p>
+                            <p id="resultCps" class="text-xl font-bold">0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史记录 -->
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700 p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa fa-history text-primary"></i>
+                    历史记录
+                </h3>
+                <div id="historyList" class="max-h-48 overflow-y-auto">
+                    <p class="text-gray-400 text-center py-4">暂无测试记录</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 说明卡片 -->
+        <div class="max-w-3xl mx-auto mt-8 bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700 p-6">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fa fa-info-circle text-primary"></i>
+                CPS测试说明
+            </h3>
+            <div class="text-gray-300 space-y-2">
+                <p>• CPS (Clicks Per Second) 即每秒点击次数，是衡量点击速度的常用指标</p>
+                <p>• 测试方法：选择测试时长，点击开始按钮后快速点击测试按钮</p>
+                <p>• 普通用户的CPS通常在5-7之间，专业游戏玩家可达10以上</p>
+                <p>• 可以通过练习提高点击速度，比如使用连点技巧或肌肉记忆</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 帮助模态框 -->
+    <div id="helpModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-2xl max-w-md w-full p-6 border border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">使用帮助</h3>
+                <button id="closeHelp" class="text-gray-400 hover:text-white">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="text-gray-300 space-y-3">
+                <p>1. 选择测试时长（10秒/30秒/60秒）</p>
+                <p>2. 点击"开始"按钮启动测试</p>
+                <p>3. 快速点击中间的大按钮，尽可能多地点击</p>
+                <p>4. 测试结束后会显示你的CPS值和总点击数</p>
+                <p>5. 所有测试记录会保存在历史记录中</p>
+                <p class="text-primary mt-4">提示：可以尝试不同的点击方式（如单指、多指、连点）来提高CPS值</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark/80 backdrop-blur-md border-t border-gray-700 py-6">
+        <div class="container mx-auto px-4 text-center text-gray-400">
+            <p>CPS测试网站 &copy; 2025 | 设计与开发 by 豆包编程助手</p>
+            <p class="mt-2 text-sm">本网站仅用于测试点击速度，数据保存在本地浏览器中</p>
+        </div>
+    </footer>
+
+    <script>
+        // 全局变量
+        let clickCount = 0;
+        let cpsValue = 0;
+        let timer = null;
+        let timeLeft = 10;
+        let testDuration = 10;
+        let isTesting = false;
+        let historyRecords = JSON.parse(localStorage.getItem('cpsHistory')) || [];
+
+        // DOM元素
+        const clickButton = document.getElementById('clickButton');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const clickCountEl = document.getElementById('clickCount');
+        const cpsValueEl = document.getElementById('cpsValue');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const statusText = document.getElementById('statusText');
+        const time10Btn = document.getElementById('time10');
+        const time30Btn = document.getElementById('time30');
+        const time60Btn = document.getElementById('time60');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const resultClicks = document.getElementById('resultClicks');
+        const resultCps = document.getElementById('resultCps');
+        const historyList = document.getElementById('historyList');
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const closeHelp = document.getElementById('closeHelp');
+        const themeToggle = document.getElementById('themeToggle');
+
+        // 初始化
+        updateHistoryList();
+        updateTheme();
+
+        // 时长选择
+        time10Btn.addEventListener('click', () => setTestDuration(10));
+        time30Btn.addEventListener('click', () => setTestDuration(30));
+        time60Btn.addEventListener('click', () => setTestDuration(60));
+
+        // 按钮事件
+        clickButton.addEventListener('click', handleClick);
+        startBtn.addEventListener('click', startTest);
+        resetBtn.addEventListener('click', resetTest);
+        helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+        closeHelp.addEventListener('click', () => helpModal.classList.add('hidden'));
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // 点击外部关闭模态框
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) helpModal.classList.add('hidden');
+        });
+
+        // 设置测试时长
+        function setTestDuration(duration) {
+            if (isTesting) return;
+            
+            // 重置样式
+            time10Btn.classList.remove('active', 'bg-primary/80');
+            time30Btn.classList.remove('active', 'bg-primary/80');
+            time60Btn.classList.remove('active', 'bg-primary/80');
+            time10Btn.classList.add('bg-gray-700');
+            time30Btn.classList.add('bg-gray-700');
+            time60Btn.classList.add('bg-gray-700');
+            
+            // 设置选中样式
+            if (duration === 10) {
+                time10Btn.classList.add('active', 'bg-primary/80');
+                time10Btn.classList.remove('bg-gray-700');
+            } else if (duration === 30) {
+                time30Btn.classList.add('active', 'bg-primary/80');
+                time30Btn.classList.remove('bg-gray-700');
+            } else if (duration === 60) {
+                time60Btn.classList.add('active', 'bg-primary/80');
+                time60Btn.classList.remove('bg-gray-700');
+            }
+            
+            testDuration = duration;
+            timeLeft = duration;
+            timerDisplay.textContent = duration;
+            resetTest();
+        }
+
+        // 处理点击
+        function handleClick() {
+            if (!isTesting) return;
+            
+            clickCount++;
+            clickCountEl.textContent = clickCount;
+            
+            // 实时计算CPS
+            const elapsedTime = testDuration - timeLeft;
+            if (elapsedTime > 0) {
+                cpsValue = clickCount / elapsedTime;
+                cpsValueEl.textContent = cpsValue.toFixed(2);
+            }
+        }
+
+        // 开始测试
+        function startTest() {
+            if (isTesting) return;
+            
+            isTesting = true;
+            clickCount = 0;
+            cpsValue = 0;
+            timeLeft = testDuration;
+            
+            clickCountEl.textContent = '0';
+            cpsValueEl.textContent = '0.00';
+            timerDisplay.textContent = testDuration;
+            statusText.textContent = '测试进行中...';
+            clickButton.textContent = '点击我!';
+            clickButton.classList.add('animate-pulse-slow');
+            
+            // 启动计时器
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                
+                // 更新实时CPS
+                const elapsedTime = testDuration - timeLeft;
+                if (elapsedTime > 0) {
+                    cpsValue = clickCount / elapsedTime;
+                    cpsValueEl.textContent = cpsValue.toFixed(2);
+                }
+                
+                // 测试结束
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    endTest();
+                }
+            }, 1000);
+        }
+
+        // 结束测试
+        function endTest() {
+            isTesting = false;
+            clickButton.classList.remove('animate-pulse-slow');
+            statusText.textContent = '测试结束!';
+            clickButton.textContent = '开始测试';
+            
+            // 计算最终CPS
+            const finalCps = clickCount / testDuration;
+            cpsValueEl.textContent = finalCps.toFixed(2);
+            
+            // 更新结果显示
+            resultClicks.textContent = clickCount;
+            resultCps.textContent = finalCps.toFixed(2);
+            
+            // 添加到历史记录
+            const record = {
+                id: Date.now(),
+                clicks: clickCount,
+                cps: finalCps,
+                duration: testDuration,
+                date: new Date().toLocaleString()
+            };
+            
+            historyRecords.unshift(record);
+            if (historyRecords.length > 10) {
+                historyRecords.pop();
+            }
+            
+            // 保存到本地存储
+            localStorage.setItem('cpsHistory', JSON.stringify(historyRecords));
+            
+            // 更新历史记录列表
+            updateHistoryList();
+            
+            // 显示结果提示
+            resultDisplay.innerHTML = `
+                <p class="text-lg font-bold text-secondary mb-2">测试完成!</p>
+                <p class="text-gray-300 mb-4">你在${testDuration}秒内点击了${clickCount}次</p>
+                <div class="flex justify-center gap-8 mt-4">
+                    <div>
+                        <p class="text-sm text-gray-400">总点击</p>
+                        <p class="text-2xl font-bold text-primary">${clickCount}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-400">CPS</p>
+                        <p class="text-2xl font-bold text-secondary">${finalCps.toFixed(2)}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 重置测试
+        function resetTest() {
+            clearInterval(timer);
+            isTesting = false;
+            
+            clickCount = 0;
+            cpsValue = 0;
+            timeLeft = testDuration;
+            
+            clickCountEl.textContent = '0';
+            cpsValueEl.textContent = '0.00';
+            timerDisplay.textContent = testDuration;
+            statusText.textContent = '点击下方按钮开始测试';
+            clickButton.textContent = '开始测试';
+            clickButton.classList.remove('animate-pulse-slow');
+        }
+
+        // 更新历史记录列表
+        function updateHistoryList() {
+            if (historyRecords.length === 0) {
+                historyList.innerHTML = '<p class="text-gray-400 text-center py-4">暂无测试记录</p>';
+                return;
+            }
+            
+            historyList.innerHTML = '';
+            historyRecords.forEach((record, index) => {
+                const recordEl = document.createElement('div');
+                recordEl.className = 'flex justify-between items-center py-2 border-b border-gray-700 last:border-0';
+                
+                recordEl.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm">${index + 1}</span>
+                        <span class="text-gray-300">${record.date}</span>
+                    </div>
+                    <div class="flex gap-4">
+                        <span class="text-gray-300">${record.clicks}次/${record.duration}秒</span>
+                        <span class="font-bold text-secondary">${record.cps.toFixed(2)} CPS</span>
+                    </div>
+                `;
+                
+                historyList.appendChild(recordEl);
+            });
+        }
+
+        // 切换主题
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('bg-white');
+            if (isDark) {
+                document.body.classList.remove('bg-gradient-to-br', 'from-dark', 'to-gray-800', 'text-light');
+                document.body.classList.add('bg-gray-100', 'text-dark');
+                themeToggle.innerHTML = '<i class="fa fa-sun-o text-lg"></i>';
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.body.classList.add('bg-gradient-to-br', 'from-dark', 'to-gray-800', 'text-light');
+                document.body.classList.remove('bg-gray-100', 'text-dark');
+                themeToggle.innerHTML = '<i class="fa fa-moon-o text-lg"></i>';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // 更新主题
+        function updateTheme() {
+            const theme = localStorage.getItem('theme') || 'dark';
+            if (theme === 'light') {
+                document.body.classList.remove('bg-gradient-to-br', 'from-dark', 'to-gray-800', 'text-light');
+                document.body.classList.add('bg-gray-100', 'text-dark');
+                themeToggle.innerHTML = '<i class="fa fa-sun-o text-lg"></i>';
+            } else {
+                document.body.classList.add('bg-gradient-to-br', 'from-dark', 'to-gray-800', 'text-light');
+                document.body.classList.remove('bg-gray-100', 'text-dark');
+                themeToggle.innerHTML = '<i class="fa fa-moon-o text-lg"></i>';
+            }
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            // 空格键开始/点击
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (!isTesting) {
+                    startTest();
+                } else {
+                    handleClick();
+                }
+            }
+            
+            // R键重置
+            if (e.code === 'KeyR') {
+                resetTest();
+            }
+            
+            // ESC关闭模态框
+            if (e.code === 'Escape') {
+                helpModal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
